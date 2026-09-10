@@ -43,7 +43,8 @@ export default function OnboardingScreen() {
       handleGetStarted();
     }
   };
-  
+
+  //added a comment here
 
   const handleSkip = () => {
     setOnboarded(true);
