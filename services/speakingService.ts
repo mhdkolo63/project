@@ -1,5 +1,9 @@
-import { apiRequest } from './api';
-import { EnglishLevel, SpeakingFeedback, SpeakingConversationTurn } from '@/types';
+import { supabase } from './supabase';
+import type {
+  EnglishLevel,
+  SpeakingFeedback,
+  SpeakingConversationTurn,
+} from '@/types';
 
 export interface SpeakingFeedbackRequest {
   transcription: string;
@@ -23,17 +27,47 @@ export interface SpeakingConversationResponse {
 }
 
 export const speakingService = {
-  async getFeedback(data: SpeakingFeedbackRequest): Promise<SpeakingFeedback> {
-    return apiRequest<SpeakingFeedback>('/ai/speaking-feedback', {
-      method: 'POST',
-      body: data,
-    });
+  async getFeedback(
+    data: SpeakingFeedbackRequest
+  ): Promise<SpeakingFeedback> {
+    const { data: result, error } = await supabase.functions.invoke(
+      'speaking-feedback',
+      {
+        body: data,
+      }
+    );
+
+    if (error) {
+      throw new Error(error.message || 'Unable to get speaking feedback.');
+    }
+
+    if (!result) {
+      throw new Error('No speaking feedback was returned.');
+    }
+
+    return result as SpeakingFeedback;
   },
 
-  async getConversationReply(data: SpeakingConversationRequest): Promise<SpeakingConversationResponse> {
-    return apiRequest<SpeakingConversationResponse>('/ai/speaking-conversation', {
-      method: 'POST',
-      body: data,
-    });
+  async getConversationReply(
+    data: SpeakingConversationRequest
+  ): Promise<SpeakingConversationResponse> {
+    const { data: result, error } = await supabase.functions.invoke(
+      'speaking-conversation',
+      {
+        body: data,
+      }
+    );
+
+    if (error) {
+      throw new Error(
+        error.message || 'Unable to get speaking conversation reply.'
+      );
+    }
+
+    if (!result) {
+      throw new Error('No conversation reply was returned.');
+    }
+
+    return result as SpeakingConversationResponse;
   },
 };
