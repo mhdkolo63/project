@@ -28,8 +28,8 @@ export interface GrammarCheckRequest {
   text: string;
   userLevel: 'Beginner' | 'Intermediate' | 'Advanced';
 }
+let provider: AIProvider | null = aiApiProvider;
 
-let provider: AIProvider | null = AppConfig.apiBaseUrl ? aiApiProvider : null;
 
 export const aiService = {
   setProvider(nextProvider: AIProvider): void {
