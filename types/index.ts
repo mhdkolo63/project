@@ -269,6 +269,7 @@ export interface SpeakingCompletion {
   grammarScore?: number;
   vocabularyScore?: number;
   naturalnessScore?: number;
+  pronunciationScore?: number;
   attempts: SpeakingAttempt[];
   xpAwarded: boolean;
   xpAmount: number;
