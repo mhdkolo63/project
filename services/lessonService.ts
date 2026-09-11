@@ -1,15 +1,27 @@
-import { apiRequest } from './api';
-import { Lesson, EnglishLevel } from '@/types';
-import { getLessonsByLevel, getLessonById, allLessons } from '@/data/lessons';
+import type { Lesson, EnglishLevel } from '@/types';
+import {
+  getLessonsByLevel,
+  getLessonById,
+  allLessons,
+} from '@/data/lessons';
 
 export const lessonService = {
-  async getLessons(token: string, level?: EnglishLevel): Promise<Lesson[]> {
-    const endpoint = level ? `/lessons?level=${level}` : '/lessons';
-    return apiRequest<Lesson[]>(endpoint, { token });
+  async getLessons(level?: EnglishLevel): Promise<Lesson[]> {
+    if (level) {
+      return getLessonsByLevel(level);
+    }
+
+    return allLessons;
   },
 
-  async getLesson(token: string, lessonId: string): Promise<Lesson> {
-    return apiRequest<Lesson>(`/lessons/${lessonId}`, { token });
+  async getLesson(lessonId: string): Promise<Lesson> {
+    const lesson = getLessonById(lessonId);
+
+    if (!lesson) {
+      throw new Error(`Lesson not found: ${lessonId}`);
+    }
+
+    return lesson;
   },
 
   getLocalLessonsByLevel(level: EnglishLevel): Lesson[] {
