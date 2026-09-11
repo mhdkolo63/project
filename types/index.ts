@@ -128,6 +128,8 @@ export interface VocabWord {
 export interface SavedVocabWord extends VocabWord {
   savedAt: string;
   learned: boolean;
+  definition?: string;
+  pronunciation?: string;
 }
 
 export interface Achievement {
@@ -201,6 +203,7 @@ export interface ReadingCompletion {
   completedAt: string;
   readingTimeSeconds: number;
   comprehensionScore: number;
+  score?: number;
   totalQuestions: number;
   xpAwarded: boolean;
   xpAmount: number;
@@ -230,7 +233,11 @@ export interface SpeakingVocabWord {
 export interface SpeakingFeedback {
   grammar: {
     score: number;
-    corrections: { original: string; corrected: string; explanation: string }[];
+    corrections: {
+      original: string;
+      corrected: string;
+      explanation: string;
+    }[];
   };
   vocabulary: {
     score: number;
@@ -239,7 +246,10 @@ export interface SpeakingFeedback {
   };
   naturalness: {
     score: number;
-    alternatives: { original: string; natural: string }[];
+    alternatives: {
+      original: string;
+      natural: string;
+    }[];
   };
   overallFeedback: string;
   overallScore: number;
@@ -256,6 +266,9 @@ export interface SpeakingCompletion {
   practiceId: string;
   completedAt: string;
   overallScore: number;
+  grammarScore?: number;
+  vocabularyScore?: number;
+  naturalnessScore?: number;
   attempts: SpeakingAttempt[];
   xpAwarded: boolean;
   xpAmount: number;
@@ -269,7 +282,8 @@ export interface SpeakingConversationTurn {
 }
 
 export interface SpeakingWeakness {
-  area: string;
+  area?: string;
+  category?: string;
   averageScore: number;
-  practiceCount: number;
-}
+  practiceCount?: number;
+    }
