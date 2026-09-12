@@ -316,15 +316,18 @@ export function AppProvider({
 
       if (vocabResponse.data) {
         setVocabulary(
-          vocabResponse.data.map((v) => ({
-            id: v.id || v.word,
-            word: v.word,
-            definition: v.definition || '',
-            example: v.example || '',
-            pronunciation: v.pronunciation || '',
-            learned: v.learned || false,
-            savedAt: v.saved_at || new Date().toISOString(),
-          }))
+         vocabResponse.data.map((v) => ({
+  id: v.id || v.word,
+  word: v.word,
+  meaning: v.meaning || v.definition || '',
+  definition: v.definition || v.meaning || '',
+  example: v.example || '',
+  partOfSpeech: v.part_of_speech || 'word',
+  level: v.level || 'Beginner',
+  pronunciation: v.pronunciation || '',
+  learned: v.learned ?? false,
+  savedAt: v.saved_at || new Date().toISOString(),
+}))
         );
       }
 
@@ -1188,7 +1191,7 @@ export function AppProvider({
       return categories
         .map(({ category, getScore }) => {
           const total = speakingCompletions.reduce(
-            (sum, item) => sum + getScore(item),
+          (sum, item) => sum + (getScore(item) ?? 0),
             0
           );
 

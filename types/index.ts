@@ -199,14 +199,15 @@ export interface ReadingComprehensionQuestion {
 }
 
 export interface ReadingCompletion {
+  userId?: string;
   passageId: string;
-  completedAt: string;
-  readingTimeSeconds: number;
-  comprehensionScore: number;
   score?: number;
-  totalQuestions: number;
-  xpAwarded: boolean;
-  xpAmount: number;
+  completedAt: string;
+  readingTimeSeconds?: number;
+  comprehensionScore?: number;
+  totalQuestions?: number;
+  xpAwarded?: boolean;
+  xpAmount?: number;
 }
 
 export interface SpeakingPractice {
@@ -263,17 +264,18 @@ export interface SpeakingAttempt {
 }
 
 export interface SpeakingCompletion {
+  userId?: string;
   practiceId: string;
-  completedAt: string;
-  overallScore: number;
+  pronunciationScore?: number;
   grammarScore?: number;
   vocabularyScore?: number;
   naturalnessScore?: number;
-  pronunciationScore?: number;
-  attempts: SpeakingAttempt[];
-  xpAwarded: boolean;
-  xpAmount: number;
-  mode: 'single' | 'conversation';
+  overallScore?: number;
+  completedAt: string;
+  attempts?: SpeakingAttempt[];
+  xpAwarded?: boolean;
+  xpAmount?: number;
+  mode?: 'single' | 'conversation';
 }
 
 export interface SpeakingConversationTurn {
