@@ -17,13 +17,15 @@ export const aiApiProvider: AIProvider = {
     );
 
     if (error) {
-      throw new Error(error.message || 'Unable to send AI message.');
-    }
-
+  console.error('AI CHAT ERROR:', error);
+  throw new Error(error.message || 'Unable to send AI message.');
+}
     if (!result) {
-      throw new Error('No response was returned by the AI.');
-    }
+  console.error('AI CHAT EMPTY RESPONSE:', result);
+  throw new Error('No response was returned by the AI.');
+}
 
+console.log('AI CHAT RESPONSE:', result);
     return result as ChatResponse;
   },
 
