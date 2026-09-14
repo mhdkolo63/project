@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, Star, BookOpen, Target, ArrowRight, Zap, Calendar, Lightbulb, CheckCircle2, Circle, ListChecks } from 'lucide-react-native';
+import { Flame, Star, BookOpen, Target, ArrowRight, Zap, Calendar, Lightbulb, CheckCircle2, Circle, ListChecks, Mic } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/Card';
@@ -223,6 +223,28 @@ export default function HomeScreen() {
           </LinearGradient>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          onPress={() => router.push('/speaking-practice')}
+          activeOpacity={0.8}
+          style={styles.speakingPracticalCard}
+        >
+          <LinearGradient
+            colors={[theme.colors.secondary, theme.colors.secondaryLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.speakingGradient}
+          >
+            <View style={styles.speakingIconBox}>
+              <Mic size={28} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.speakingTextContainer}>
+              <Text style={styles.speakingCardTitle}>Speaking Practical</Text>
+              <Text style={styles.speakingCardDesc}>Practice speaking English and get instant AI feedback</Text>
+            </View>
+            <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
+          </LinearGradient>
+        </TouchableOpacity>
+
         <View style={styles.quickActions}>
           <TouchableOpacity
             onPress={() => router.push('/grammar-check')}
@@ -419,6 +441,39 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
   },
   readingCardDesc: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSize.xs,
+    lineHeight: fontSize.xs * 1.4,
+  },
+  speakingPracticalCard: {
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  speakingGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  speakingIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  speakingTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  speakingCardTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  speakingCardDesc: {
     color: 'rgba(255,255,255,0.88)',
     fontSize: fontSize.xs,
     lineHeight: fontSize.xs * 1.4,

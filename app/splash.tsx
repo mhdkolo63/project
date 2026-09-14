@@ -19,7 +19,7 @@ import { AppConfig } from '@/constants/config';
 
 export default function SplashScreen() {
   const { theme } = useTheme();
-  const { user, isOnboarded } = useApp();
+  const { user, isOnboarded, isLoading } = useApp();
 
   const logoScale = useSharedValue(0.5);
   const logoOpacity = useSharedValue(0);
@@ -28,7 +28,14 @@ export default function SplashScreen() {
   const footerOpacity = useSharedValue(0);
   const screenOpacity = useSharedValue(1);
 
+  const animationDoneRef = useRef(false);
+  const loadingDoneRef = useRef(false);
+  const hasNavigatedRef = useRef(false);
+
   const navigateAway = () => {
+    if (hasNavigatedRef.current) return;
+    hasNavigatedRef.current = true;
+
     if (user && !user.isGuest && isOnboarded) {
       router.replace('/(tabs)');
     } else if (user && user.isGuest) {
@@ -37,6 +44,12 @@ export default function SplashScreen() {
       router.replace('/(auth)/login');
     } else {
       router.replace('/onboarding');
+    }
+  };
+
+  const tryNavigate = () => {
+    if (animationDoneRef.current && loadingDoneRef.current) {
+      runOnJS(navigateAway)();
     }
   };
 
@@ -52,10 +65,20 @@ export default function SplashScreen() {
     screenOpacity.value = withDelay(
       2200,
       withTiming(0, { duration: 500 }, (finished) => {
-        if (finished) runOnJS(navigateAway)();
+        if (finished) {
+          animationDoneRef.current = true;
+          tryNavigate();
+        }
       })
     );
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      loadingDoneRef.current = true;
+      tryNavigate();
+    }
+  }, [isLoading]);
 
   const logoAnim = useAnimatedStyle(() => ({
     transform: [{ scale: logoScale.value }],
