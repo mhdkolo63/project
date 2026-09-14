@@ -9,6 +9,8 @@ import type { ChatMessage, GrammarCheckResult } from '@/types';
 
 export const aiApiProvider: AIProvider = {
   async sendMessage(data: ChatRequest): Promise<ChatResponse> {
+    console.log('AI CHAT REQUEST:', data);
+
     const { data: result, error } = await supabase.functions.invoke(
       'ai-chat',
       {
@@ -17,35 +19,52 @@ export const aiApiProvider: AIProvider = {
     );
 
     if (error) {
-  console.error('AI CHAT ERROR:', error);
-  throw new Error(error.message || 'Unable to send AI message.');
-}
-    if (!result) {
-  console.error('AI CHAT EMPTY RESPONSE:', result);
-  throw new Error('No response was returned by the AI.');
-}
+      console.error('AI CHAT ERROR:', error);
+      throw new Error(
+        `AI chat function error: ${error.message || 'Unable to send AI message.'}`
+      );
+    }
 
-console.log('AI CHAT RESPONSE:', result);
+    if (!result) {
+      console.error('AI CHAT EMPTY RESPONSE:', result);
+      throw new Error('No response was returned by the AI.');
+    }
+
+    console.log('AI CHAT RESPONSE:', result);
+
     return result as ChatResponse;
   },
 
   async checkGrammar(
     data: GrammarCheckRequest
   ): Promise<GrammarCheckResult> {
+    console.log('GRAMMAR REQUEST:', data);
+
     const { data: result, error } = await supabase.functions.invoke(
       'ai-grammar-check',
       {
-        body: data,
+        body: {
+          text: data.text,
+          userLevel: data.userLevel,
+        },
       }
     );
 
     if (error) {
-      throw new Error(error.message || 'Unable to check grammar.');
+      console.error('GRAMMAR FUNCTION ERROR:', error);
+      throw new Error(
+        `Grammar function error: ${
+          error.message || 'Unable to check grammar.'
+        }`
+      );
     }
 
     if (!result) {
-      throw new Error('No grammar result was returned.');
+      console.error('GRAMMAR EMPTY RESPONSE:', result);
+      throw new Error('Grammar function returned no data.');
     }
+
+    console.log('GRAMMAR RESPONSE:', result);
 
     return result as GrammarCheckResult;
   },
@@ -59,7 +78,10 @@ console.log('AI CHAT RESPONSE:', result);
     );
 
     if (error) {
-      throw new Error(error.message || 'Unable to load chat history.');
+      console.error('AI CHAT HISTORY ERROR:', error);
+      throw new Error(
+        error.message || 'Unable to load chat history.'
+      );
     }
 
     return (result || []) as ChatMessage[];
