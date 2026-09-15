@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Volume2, Square } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
@@ -11,6 +11,7 @@ import { ReadingResult } from '@/components/ReadingResult';
 import { spacing, fontSize, fontWeight, radius } from '@/constants/layout';
 import { SavedVocabWord, ReadingVocabWord } from '@/types';
 import { getReadingById, readingSpeedConfig } from '@/data/readingPracticals';
+import { ttsService } from '@/services/ttsService';
 
 type ScreenState = 'reading' | 'complete';
 
@@ -28,10 +29,20 @@ export default function ReadingScreen() {
   const [restartSignal, setRestartSignal] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
   const [comprehensionScore, setComprehensionScore] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const accumulatedTimeRef = useRef<number>(0);
+
+  // TTS subscription
+  useEffect(() => {
+    const unsub = ttsService.subscribe((state) => setIsSpeaking(state.speaking));
+    return () => {
+      unsub();
+      ttsService.stop();
+    };
+  }, []);
 
   // Timer management
   useEffect(() => {
@@ -76,7 +87,16 @@ export default function ReadingScreen() {
     setScreenState('complete');
   };
 
+  const handleReadAloud = () => {
+    if (isSpeaking) {
+      ttsService.stop();
+    } else {
+      ttsService.speak(passage.text, { language: 'en-US', rate: speed });
+    }
+  };
+
   const handlePlayPause = () => {
+    if (isSpeaking) ttsService.stop();
     setIsPlaying((prev) => !prev);
   };
 
@@ -164,10 +184,30 @@ export default function ReadingScreen() {
           <Text style={[styles.headerTitle, { color: theme.colors.text }]} numberOfLines={1}>
             {passage.title}
           </Text>
-          <View style={[styles.levelBadge, { backgroundColor: theme.colors.primarySoft }]}>
-            <Text style={[styles.levelText, { color: theme.colors.primary }]}>
-              {passage.level}
-            </Text>
+          <View style={styles.headerRight}>
+            {ttsService.isAvailable() && (
+              <TouchableOpacity
+                onPress={handleReadAloud}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={isSpeaking ? 'Stop reading aloud' : 'Read passage aloud'}
+                style={[styles.ttsBtn, { backgroundColor: isSpeaking ? theme.colors.errorSoft : theme.colors.primarySoft }]}
+              >
+                {isSpeaking ? (
+                  <Square size={16} color={theme.colors.error} strokeWidth={2} fill={theme.colors.error} />
+                ) : (
+                  <Volume2 size={16} color={theme.colors.primary} strokeWidth={2} />
+                )}
+                <Text style={[styles.ttsBtnText, { color: isSpeaking ? theme.colors.error : theme.colors.primary }]}>
+                  {isSpeaking ? 'Stop' : 'Read Aloud'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            <View style={[styles.levelBadge, { backgroundColor: theme.colors.primarySoft }]}>
+              <Text style={[styles.levelText, { color: theme.colors.primary }]}>
+                {passage.level}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -218,6 +258,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  ttsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  ttsBtnText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
   },
   headerTitle: {
     fontSize: fontSize.lg,

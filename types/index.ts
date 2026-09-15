@@ -183,10 +183,20 @@ export interface AssessmentQuestion {
   explanation: string;
 }
 
+export type ReadingCategory =
+  | 'Daily Life'
+  | 'Education'
+  | 'Travel'
+  | 'Work & Business'
+  | 'Technology'
+  | 'Health'
+  | 'Culture';
+
 export interface ReadingPractical {
   id: string;
   title: string;
   level: EnglishLevel;
+  category: ReadingCategory;
   text: string;
   estimatedMinutes: number;
   vocabulary: ReadingVocabWord[];

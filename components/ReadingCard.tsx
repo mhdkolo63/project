@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Clock, CheckCircle2, BookOpen } from 'lucide-react-native';
+import { Clock, CheckCircle2, BookOpen, Tag } from 'lucide-react-native';
 import { Card } from './Card';
 import { useTheme } from '@/context/ThemeContext';
 import { spacing, fontSize, fontWeight, radius } from '@/constants/layout';
@@ -39,6 +39,14 @@ export function ReadingCard({ passage, completed, onPress }: ReadingCardProps) {
               {passage.estimatedMinutes} min
             </Text>
           </View>
+          <View style={[styles.catBadge, { backgroundColor: theme.colors.secondarySoft }]}>
+            <Tag size={12} color={theme.colors.secondary} strokeWidth={2} />
+            <Text style={[styles.catText, { color: theme.colors.secondary }]}>
+              {passage.category}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.metaRow}>
           <View style={[styles.diffBadge, { backgroundColor: theme.colors.surfaceAlt }]}>
             <Text style={[styles.diffText, { color: theme.colors.textSecondary }]}>
               {passage.level}
@@ -101,6 +109,18 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fontSize.xs,
+  },
+  catBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  catText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
   },
   diffBadge: {
     paddingVertical: 2,

@@ -302,8 +302,8 @@ export default function HomeScreen() {
               <BookOpen size={28} color="#FFFFFF" strokeWidth={2} />
             </View>
             <View style={styles.readingTextContainer}>
-              <Text style={styles.readingCardTitle}>Reading Practical</Text>
-              <Text style={styles.readingCardDesc}>Improve reading speed & comprehension with a teleprompter</Text>
+              <Text style={styles.readingCardTitle}>Reading Practice</Text>
+              <Text style={styles.readingCardDesc}>Read passages by topic & level, with comprehension quizzes</Text>
             </View>
             <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
           </LinearGradient>

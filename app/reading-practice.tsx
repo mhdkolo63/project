@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { BookOpen, ChevronLeft, ChevronRight, Gauge } from 'lucide-react-native';
+import { BookOpen, ChevronLeft, Gauge, CheckCircle2, FolderOpen } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { ScreenContainer } from '@/components/ScreenContainer';
 import { ReadingCard } from '@/components/ReadingCard';
 import { spacing, fontSize, fontWeight, radius } from '@/constants/layout';
-import { EnglishLevel } from '@/types';
-import { getReadingsByLevel, readingSpeedConfig } from '@/data/readingPracticals';
+import { EnglishLevel, ReadingCategory } from '@/types';
+import { getReadingsByLevel, readingSpeedConfig, readingPracticals } from '@/data/readingPracticals';
 
 const levelTabs: { level: EnglishLevel; label: string; emoji: string }[] = [
   { level: 'Beginner', label: 'Beginner', emoji: '🟢' },
@@ -16,13 +16,40 @@ const levelTabs: { level: EnglishLevel; label: string; emoji: string }[] = [
   { level: 'Advanced', label: 'Advanced', emoji: '🔴' },
 ];
 
+const allCategories: ReadingCategory[] = [
+  'Daily Life',
+  'Education',
+  'Travel',
+  'Work & Business',
+  'Technology',
+  'Health',
+  'Culture',
+];
+
 export default function ReadingPracticeScreen() {
   const { theme } = useTheme();
   const { user, isReadingCompleted } = useApp();
   const [selectedLevel, setSelectedLevel] = useState<EnglishLevel>(user?.englishLevel || 'Beginner');
+  const [selectedCategory, setSelectedCategory] = useState<ReadingCategory | 'All'>('All');
 
-  const passages = useMemo(() => getReadingsByLevel(selectedLevel), [selectedLevel]);
+  const levelPassages = useMemo(() => getReadingsByLevel(selectedLevel), [selectedLevel]);
+
+  const availableCategories = useMemo(() => {
+    const cats = new Set(levelPassages.map((p) => p.category));
+    return allCategories.filter((c) => cats.has(c));
+  }, [levelPassages]);
+
+  const passages = useMemo(() => {
+    if (selectedCategory === 'All') return levelPassages;
+    return levelPassages.filter((p) => p.category === selectedCategory);
+  }, [levelPassages, selectedCategory]);
+
   const defaultSpeed = readingSpeedConfig[selectedLevel];
+
+  const completedCount = useMemo(
+    () => levelPassages.filter((p) => isReadingCompleted(p.id)).length,
+    [levelPassages, isReadingCompleted]
+  );
 
   const handleStart = (passageId: string) => {
     router.push(`/reading/${passageId}`);
@@ -44,9 +71,9 @@ export default function ReadingPracticeScreen() {
           <View style={[styles.iconBox, { backgroundColor: theme.colors.primarySoft }]}>
             <BookOpen size={24} color={theme.colors.primary} strokeWidth={2} />
           </View>
-          <Text style={[styles.title, { color: theme.colors.text }]}>Reading Practical</Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>Reading Practice</Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            Improve your English reading speed, comprehension, vocabulary, and confidence.
+            Improve your reading speed, comprehension, and vocabulary with passages across different topics.
           </Text>
         </View>
       </View>
@@ -61,7 +88,10 @@ export default function ReadingPracticeScreen() {
             return (
               <TouchableOpacity
                 key={tab.level}
-                onPress={() => setSelectedLevel(tab.level)}
+                onPress={() => {
+                  setSelectedLevel(tab.level);
+                  setSelectedCategory('All');
+                }}
                 activeOpacity={0.8}
                 accessibilityRole="button"
                 accessibilityLabel={`Select ${tab.label} level`}
@@ -90,11 +120,89 @@ export default function ReadingPracticeScreen() {
         </View>
       </View>
 
-      <View style={[styles.speedInfo, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-        <Gauge size={18} color={theme.colors.primary} strokeWidth={2} />
-        <Text style={[styles.speedInfoText, { color: theme.colors.textSecondary }]}>
-          Default speed for {selectedLevel}: <Text style={{ fontWeight: fontWeight.semibold, color: theme.colors.text }}>{defaultSpeed.toFixed(2)}x</Text>
+      <View
+        style={[
+          styles.progressSummary,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        ]}
+      >
+        <View style={styles.progressItem}>
+          <CheckCircle2 size={18} color={theme.colors.success} strokeWidth={2} />
+          <Text style={[styles.progressText, { color: theme.colors.textSecondary }]}>
+            <Text style={{ fontWeight: fontWeight.semibold, color: theme.colors.text }}>
+              {completedCount}
+            </Text>
+            /{levelPassages.length} completed
+          </Text>
+        </View>
+        <View style={styles.progressItem}>
+          <Gauge size={18} color={theme.colors.primary} strokeWidth={2} />
+          <Text style={[styles.progressText, { color: theme.colors.textSecondary }]}>
+            Speed: <Text style={{ fontWeight: fontWeight.semibold, color: theme.colors.text }}>{defaultSpeed.toFixed(2)}x</Text>
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.topicSection}>
+        <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>
+          Topic
         </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.topicChips}
+        >
+          <TouchableOpacity
+            onPress={() => setSelectedCategory('All')}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.topicChip,
+                selectedCategory === 'All'
+                  ? { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }
+                  : { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.topicChipText,
+                  { color: selectedCategory === 'All' ? '#FFFFFF' : theme.colors.textSecondary },
+                ]}
+              >
+                All Topics
+              </Text>
+            </View>
+          </TouchableOpacity>
+          {availableCategories.map((cat) => {
+            const isActive = selectedCategory === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                onPress={() => setSelectedCategory(cat)}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[
+                    styles.topicChip,
+                    isActive
+                      ? { backgroundColor: theme.colors.secondary, borderColor: theme.colors.secondary }
+                      : { backgroundColor: theme.colors.surfaceAlt, borderColor: theme.colors.border },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.topicChipText,
+                      { color: isActive ? '#FFFFFF' : theme.colors.textSecondary },
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       <Text style={[styles.sectionLabel, { color: theme.colors.textSecondary }]}>
@@ -102,14 +210,26 @@ export default function ReadingPracticeScreen() {
       </Text>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.passageList}>
-        {passages.map((passage) => (
-          <ReadingCard
-            key={passage.id}
-            passage={passage}
-            completed={isReadingCompleted(passage.id)}
-            onPress={() => handleStart(passage.id)}
-          />
-        ))}
+        {passages.length > 0 ? (
+          passages.map((passage) => (
+            <ReadingCard
+              key={passage.id}
+              passage={passage}
+              completed={isReadingCompleted(passage.id)}
+              onPress={() => handleStart(passage.id)}
+            />
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <FolderOpen size={48} color={theme.colors.textTertiary} strokeWidth={1.5} />
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
+              No passages found
+            </Text>
+            <Text style={[styles.emptyDesc, { color: theme.colors.textSecondary }]}>
+              Try selecting a different topic or level.
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </ScreenContainer>
   );
@@ -168,21 +288,57 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   },
-  speedInfo: {
+  progressSummary: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.lg,
     paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  progressItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  progressText: {
+    fontSize: fontSize.sm,
+  },
+  topicSection: {
     marginBottom: spacing.lg,
   },
-  speedInfoText: {
+  topicChips: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+  },
+  topicChip: {
+    paddingVertical: spacing.sm - 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  topicChipText: {
     fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
   passageList: {
     paddingBottom: spacing.xxl + 40,
     gap: spacing.md,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xxl,
+    gap: spacing.sm,
+  },
+  emptyTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+  },
+  emptyDesc: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
   },
 });
