@@ -16,6 +16,10 @@ export const AppConfig = {
   xpPerLesson: 50,
 
   xpPerQuiz: 50,
+
+  xpPerVocabLearned: 10,
+
+  xpPerListening: 50,
 };
 
 export type EnglishLevel = (typeof AppConfig.levels)[number];

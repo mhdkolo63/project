@@ -173,6 +173,16 @@ export interface PlacementResult {
   takenAt: string;
 }
 
+export interface AssessmentQuestion {
+  id: string;
+  category: 'Grammar' | 'Vocabulary' | 'Sentence Usage' | 'Reading Comprehension';
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  level: EnglishLevel;
+  explanation: string;
+}
+
 export interface ReadingPractical {
   id: string;
   title: string;
@@ -289,4 +299,43 @@ export interface SpeakingWeakness {
   category?: string;
   averageScore: number;
   practiceCount?: number;
-    }
+}
+
+export interface DailyChallengeCompletion {
+  userId?: string;
+  challengeDate: string;
+  activitiesCompleted: number;
+  totalActivities: number;
+  xpAwarded: number;
+  completed: boolean;
+  completedAt: string;
+}
+
+export interface ListeningExercise {
+  id: string;
+  title: string;
+  level: EnglishLevel;
+  description: string;
+  audioText: string;
+  estimatedMinutes: number;
+  comprehensionQuestions: ListeningComprehensionQuestion[];
+  xpReward: number;
+}
+
+export interface ListeningComprehensionQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+}
+
+export interface ListeningCompletion {
+  userId?: string;
+  exerciseId: string;
+  score: number;
+  totalQuestions: number;
+  completedAt: string;
+  xpAwarded?: boolean;
+  xpAmount?: number;
+}

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Flame, Star, BookOpen, Target, ArrowRight, Zap, Calendar, Lightbulb, CheckCircle2, Circle, ListChecks, Mic } from 'lucide-react-native';
+import { Flame, Star, BookOpen, Target, ArrowRight, Zap, Calendar, Lightbulb, CheckCircle2, Circle, ListChecks, Mic, Trophy, BookMarked, Headphones, BarChart3, GraduationCap } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/Card';
@@ -22,7 +22,7 @@ function getGreeting() {
 
 export default function HomeScreen() {
   const { theme } = useTheme();
-  const { user, progress, dailyPlan } = useApp();
+  const { user, progress, dailyPlan, dailyChallengeCompletion, isDailyChallengeCompleted, vocabulary } = useApp();
   const [challengeRevealed, setChallengeRevealed] = useState(false);
 
   const currentLesson = useMemo(() => {
@@ -38,6 +38,8 @@ export default function HomeScreen() {
 
   const currentProgress = progress.find((p) => p.lessonId === currentLesson?.id);
   const dailyChallenge = dailyChallenges[new Date().getDate() % dailyChallenges.length];
+  const challengeCompleted = isDailyChallengeCompleted();
+  const challengeActivitiesDone = dailyChallengeCompletion?.activitiesCompleted ?? 0;
 
   return (
     <ScreenContainer>
@@ -77,6 +79,54 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/progress')}
+          activeOpacity={0.8}
+          style={styles.dashboardCard}
+        >
+          <LinearGradient
+            colors={[theme.colors.secondary, theme.colors.secondaryLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.dashboardGradient}
+          >
+            <View style={styles.dashboardIconBox}>
+              <BarChart3 size={28} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.dashboardTextContainer}>
+              <Text style={styles.dashboardCardTitle}>My Progress</Text>
+              <Text style={styles.dashboardCardDesc}>
+                View your XP, streak, skill breakdown, and recent activity
+              </Text>
+            </View>
+            <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push('/level-assessment')}
+          activeOpacity={0.8}
+          style={styles.assessmentCard}
+        >
+          <LinearGradient
+            colors={[theme.colors.accent, theme.colors.warning]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.assessmentGradient}
+          >
+            <View style={styles.assessmentIconBox}>
+              <GraduationCap size={28} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.assessmentTextContainer}>
+              <Text style={styles.assessmentCardTitle}>Check My English Level</Text>
+              <Text style={styles.assessmentCardDesc}>
+                Take a quick assessment to discover your recommended level
+              </Text>
+            </View>
+            <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
+          </LinearGradient>
+        </TouchableOpacity>
+
         <Card style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
@@ -92,6 +142,42 @@ export default function HomeScreen() {
             style={styles.progress}
           />
         </Card>
+
+        <TouchableOpacity
+          onPress={() => router.push('/daily-challenge')}
+          activeOpacity={0.8}
+          style={styles.dailyChallengeCard}
+        >
+          <LinearGradient
+            colors={[theme.colors.accent, theme.colors.warning]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.dailyChallengeGradient}
+          >
+            <View style={styles.dailyChallengeIconBox}>
+              <Trophy size={28} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.dailyChallengeTextContainer}>
+              <Text style={styles.dailyChallengeCardTitle}>Daily English Challenge</Text>
+              <Text style={styles.dailyChallengeCardDesc}>
+                Complete today's activities and improve your English
+              </Text>
+              <View style={styles.dailyChallengeProgressRow}>
+                <View style={styles.dailyChallengeProgressBar}>
+                  <View style={[styles.dailyChallengeProgressFill, { width: `${(challengeActivitiesDone / 3) * 100}%` }]} />
+                </View>
+                <Text style={styles.dailyChallengeProgressText}>
+                  {challengeActivitiesDone} of 3 completed
+                </Text>
+              </View>
+            </View>
+            {challengeCompleted ? (
+              <CheckCircle2 size={24} color="#FFFFFF" strokeWidth={2} />
+            ) : (
+              <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
 
         {dailyPlan && (
           <Card style={styles.section}>
@@ -240,6 +326,54 @@ export default function HomeScreen() {
             <View style={styles.speakingTextContainer}>
               <Text style={styles.speakingCardTitle}>Speaking Practical</Text>
               <Text style={styles.speakingCardDesc}>Practice speaking English and get instant AI feedback</Text>
+            </View>
+            <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push('/vocabulary-review')}
+          activeOpacity={0.8}
+          style={styles.vocabReviewCard}
+        >
+          <LinearGradient
+            colors={[theme.colors.secondary, theme.colors.secondaryLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.vocabReviewGradient}
+          >
+            <View style={styles.vocabReviewIconBox}>
+              <BookMarked size={28} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.vocabReviewTextContainer}>
+              <Text style={styles.vocabReviewCardTitle}>Vocabulary Review</Text>
+              <Text style={styles.vocabReviewCardDesc}>
+                {vocabulary.length > 0
+                  ? `Review ${vocabulary.length} saved ${vocabulary.length === 1 ? 'word' : 'words'} and mark them as learned`
+                  : 'Save words from your lessons to start reviewing'}
+              </Text>
+            </View>
+            <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push('/listening-practice')}
+          activeOpacity={0.8}
+          style={styles.listeningCard}
+        >
+          <LinearGradient
+            colors={[theme.colors.primary, theme.colors.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.listeningGradient}
+          >
+            <View style={styles.listeningIconBox}>
+              <Headphones size={28} color="#FFFFFF" strokeWidth={2} />
+            </View>
+            <View style={styles.listeningTextContainer}>
+              <Text style={styles.listeningCardTitle}>Listening Practice</Text>
+              <Text style={styles.listeningCardDesc}>Improve your listening skills with practical English conversations.</Text>
             </View>
             <ArrowRight size={20} color="#FFFFFF" strokeWidth={2} />
           </LinearGradient>
@@ -518,5 +652,193 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
     textAlign: 'center',
+  },
+  dailyChallengeCard: {
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  dailyChallengeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  dailyChallengeIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  dailyChallengeTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  dailyChallengeCardTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  dailyChallengeCardDesc: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSize.xs,
+    lineHeight: fontSize.xs * 1.4,
+  },
+  dailyChallengeProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 4,
+  },
+  dailyChallengeProgressBar: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    overflow: 'hidden',
+  },
+  dailyChallengeProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  dailyChallengeProgressText: {
+    color: 'rgba(255,255,255,0.95)',
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+  },
+  vocabReviewCard: {
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  vocabReviewGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  vocabReviewIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  vocabReviewTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  vocabReviewCardTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  vocabReviewCardDesc: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSize.xs,
+    lineHeight: fontSize.xs * 1.4,
+  },
+  listeningCard: {
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  listeningGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  listeningIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  listeningTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  listeningCardTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  listeningCardDesc: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSize.xs,
+    lineHeight: fontSize.xs * 1.4,
+  },
+  dashboardCard: {
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  dashboardGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  dashboardIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  dashboardTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  dashboardCardTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  dashboardCardDesc: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSize.xs,
+    lineHeight: fontSize.xs * 1.4,
+  },
+  assessmentCard: {
+    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+  },
+  assessmentGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  assessmentIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  assessmentTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  assessmentCardTitle: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  assessmentCardDesc: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSize.xs,
+    lineHeight: fontSize.xs * 1.4,
   },
 });

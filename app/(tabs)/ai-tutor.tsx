@@ -6,7 +6,7 @@ import { useApp } from '@/context/AppContext';
 import { ChatMessage } from '@/types';
 import { spacing, fontSize, fontWeight, radius } from '@/constants/layout';
 import { aiService, ConversationMode } from '@/services/aiService';
-import { ServiceUnavailableCard } from '@/components/ServiceUnavailableCard';
+import { AuthRequiredPrompt } from '@/components/AuthRequiredPrompt';
 import { ttsService } from '@/services/ttsService';
 
 const CONVERSATION_MODES: { id: ConversationMode; label: string; icon: string }[] = [
@@ -30,6 +30,7 @@ const MODE_PROMPTS: Record<ConversationMode, string> = {
 export default function AITutorScreen() {
   const { theme } = useTheme();
   const { user } = useApp();
+  const isGuest = !user || user.isGuest;
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -54,6 +55,7 @@ export default function AITutorScreen() {
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed || isTyping) return;
+    if (isGuest) return;
 
     const userMessage: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -103,11 +105,12 @@ export default function AITutorScreen() {
     } finally {
       setIsTyping(false);
     }
-  }, [input, isTyping, messages, userLevel, selectedMode]);
+  }, [input, isTyping, messages, userLevel, selectedMode, isGuest]);
 
   const handleRetry = useCallback(async () => {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
     if (!lastUserMsg) return;
+    if (isGuest) return;
 
     // Remove the last error message
     setMessages((prev) => {
@@ -159,7 +162,18 @@ export default function AITutorScreen() {
     } finally {
       setIsTyping(false);
     }
-  }, [messages, userLevel, selectedMode]);
+  }, [messages, userLevel, selectedMode, isGuest]);
+
+  if (isGuest) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <AuthRequiredPrompt
+          title="AI Tutor Requires Sign In"
+          message="Please sign in or create an account to chat with the AI English Tutor."
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>

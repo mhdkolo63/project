@@ -6,6 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useApp } from '@/context/AppContext';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { AuthRequiredPrompt } from '@/components/AuthRequiredPrompt';
 import { spacing, fontSize, fontWeight, radius } from '@/constants/layout';
 import { GrammarCheckResult } from '@/types';
 import { aiService } from '@/services/aiService';
@@ -20,6 +21,7 @@ const sampleSentences = [
 export default function GrammarCheckScreen() {
   const { theme } = useTheme();
   const { user } = useApp();
+  const isGuest = !user || user.isGuest;
   const [input, setInput] = useState('');
   const [result, setResult] = useState<GrammarCheckResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,7 @@ export default function GrammarCheckScreen() {
   const handleCheck = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
+    if (isGuest) return;
 
     setLoading(true);
     setError(null);
@@ -47,12 +50,34 @@ export default function GrammarCheckScreen() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, userLevel]);
+  }, [input, loading, userLevel, isGuest]);
 
   const handleRetry = useCallback(() => {
     setError(null);
     handleCheck();
   }, [handleCheck]);
+
+  if (isGuest) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color={theme.colors.text} strokeWidth={2} />
+          </TouchableOpacity>
+          <View style={styles.headerInfo}>
+            <View style={styles.headerTitleRow}>
+              <BookOpen size={20} color={theme.colors.primary} strokeWidth={2} />
+              <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Check My English</Text>
+            </View>
+          </View>
+        </View>
+        <AuthRequiredPrompt
+          title="AI Grammar Check Requires Sign In"
+          message="Please sign in or create an account to check your English grammar with AI."
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>

@@ -21,10 +21,15 @@ function RootStack() {
         <Stack.Screen name="quiz/[lessonId]" />
         <Stack.Screen name="grammar-check" />
         <Stack.Screen name="placement-test" />
+        <Stack.Screen name="level-assessment" />
         <Stack.Screen name="reading-practice" />
         <Stack.Screen name="reading/[id]" />
         <Stack.Screen name="speaking-practice" />
         <Stack.Screen name="speaking/[id]" />
+        <Stack.Screen name="daily-challenge" />
+        <Stack.Screen name="vocabulary-review" />
+        <Stack.Screen name="listening-practice" />
+        <Stack.Screen name="listening/[id]" />
         <Stack.Screen name="settings/index" />
         <Stack.Screen name="settings/edit-profile" />
         <Stack.Screen name="settings/privacy" />

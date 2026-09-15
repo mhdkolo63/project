@@ -10,6 +10,7 @@ import { SpeakingRecorder } from '@/components/SpeakingRecorder';
 import { SpeakingFeedbackView } from '@/components/SpeakingFeedback';
 import { SpeakingScore } from '@/components/SpeakingScore';
 import { ConversationView } from '@/components/ConversationView';
+import { AuthRequiredPrompt } from '@/components/AuthRequiredPrompt';
 import { spacing, fontSize, fontWeight, radius } from '@/constants/layout';
 import { SpeakingFeedback, SpeakingConversationTurn, SavedVocabWord, SpeakingVocabWord } from '@/types';
 import { getSpeakingPracticeById, speakingTtsConfig } from '@/data/speakingPracticals';
@@ -23,6 +24,8 @@ export default function SpeakingScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { user, saveVocabWord, vocabulary, completeSpeaking, isSpeakingCompleted, updateStreakOnActivity, completeDailyPlanItem } = useApp();
+
+  const isGuest = !user || user.isGuest;
 
   const practice = useMemo(() => getSpeakingPracticeById(id), [id]);
 
@@ -56,6 +59,7 @@ export default function SpeakingScreen() {
   }, [ttsRate]);
 
   const handleTranscription = useCallback(async (text: string) => {
+    if (isGuest) return;
     setTranscription(text);
     setError(null);
     setLoading(true);
@@ -104,7 +108,7 @@ export default function SpeakingScreen() {
     } finally {
       setLoading(false);
     }
-  }, [conversationMode, conversationTurns, conversationTurnNumber, practice]);
+  }, [conversationMode, conversationTurns, conversationTurnNumber, practice, isGuest]);
 
   const handleTryAgain = useCallback(() => {
     setTranscription('');
@@ -143,6 +147,7 @@ export default function SpeakingScreen() {
 
   const handleStartConversation = useCallback(() => {
     if (!practice) return;
+    if (isGuest) return;
     setConversationMode(true);
     const firstTurn: SpeakingConversationTurn = {
       role: 'ai',
@@ -153,7 +158,7 @@ export default function SpeakingScreen() {
     setConversationTurnNumber(0);
     setScreenState('conversation');
     handleListen(practice.aiCoachLine);
-  }, [practice, handleListen]);
+  }, [practice, handleListen, isGuest]);
 
   const handleSaveVocab = useCallback((vocab: SpeakingVocabWord) => {
     if (!practice) return;
@@ -173,6 +178,28 @@ export default function SpeakingScreen() {
   const isVocabSaved = useCallback((word: string) => {
     return vocabulary.some((v) => v.word === word);
   }, [vocabulary]);
+
+  if (isGuest) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Go back to speaking practice"
+            style={styles.backBtn}
+          >
+            <ChevronLeft size={24} color={theme.colors.text} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+        <AuthRequiredPrompt
+          title="Speaking Practice Requires Sign In"
+          message="Please sign in or create an account to practice speaking with AI feedback."
+        />
+      </View>
+    );
+  }
 
   if (!practice) {
     return (

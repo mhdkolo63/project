@@ -18,6 +18,8 @@ import {
   ReadingCompletion,
   SpeakingCompletion,
   SpeakingWeakness,
+  DailyChallengeCompletion,
+  ListeningCompletion,
 } from '@/types';
 
 import { supabase } from '@/services/supabase';
@@ -66,6 +68,14 @@ interface AppContextValue {
   completeSpeaking: (completion: SpeakingCompletion) => boolean;
   isSpeakingCompleted: (practiceId: string) => boolean;
   getSpeakingWeaknesses: () => SpeakingWeakness[];
+
+  dailyChallengeCompletion: DailyChallengeCompletion | null;
+  completeDailyChallenge: (activitiesCompleted: number, xpAwarded: number) => boolean;
+  isDailyChallengeCompleted: () => boolean;
+
+  listeningCompletions: ListeningCompletion[];
+  completeListening: (completion: ListeningCompletion) => boolean;
+  isListeningCompleted: (exerciseId: string) => boolean;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -198,6 +208,12 @@ export function AppProvider({
   const [speakingCompletions, setSpeakingCompletions] =
     useState<SpeakingCompletion[]>([]);
 
+  const [dailyChallengeCompletion, setDailyChallengeCompletion] =
+    useState<DailyChallengeCompletion | null>(null);
+
+  const [listeningCompletions, setListeningCompletions] =
+    useState<ListeningCompletion[]>([]);
+
   const loadCloudData = useCallback(async (userId: string) => {
     try {
       const [
@@ -211,6 +227,8 @@ export function AppProvider({
         notificationResponse,
         readingResponse,
         speakingResponse,
+        dailyChallengeResponse,
+        listeningResponse,
       ] = await Promise.all([
         supabase
           .from('profiles')
@@ -265,6 +283,18 @@ export function AppProvider({
 
         supabase
           .from('speaking_completions')
+          .select('*')
+          .eq('user_id', userId),
+
+        supabase
+          .from('daily_challenge_completions')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('challenge_date', getTodayString())
+          .maybeSingle(),
+
+        supabase
+          .from('listening_completions')
           .select('*')
           .eq('user_id', userId),
       ]);
@@ -394,6 +424,33 @@ export function AppProvider({
           }))
         );
       }
+
+      if (dailyChallengeResponse.data) {
+        const dc = dailyChallengeResponse.data;
+        setDailyChallengeCompletion({
+          userId: dc.user_id,
+          challengeDate: dc.challenge_date,
+          activitiesCompleted: dc.activities_completed || 0,
+          totalActivities: 3,
+          xpAwarded: dc.xp_awarded || 0,
+          completed: (dc.activities_completed || 0) >= 3,
+          completedAt: dc.completed_at || new Date().toISOString(),
+        });
+      } else {
+        setDailyChallengeCompletion(null);
+      }
+
+      if (listeningResponse.data) {
+        setListeningCompletions(
+          listeningResponse.data.map((l) => ({
+            userId: l.user_id,
+            exerciseId: l.exercise_id,
+            score: l.score || 0,
+            totalQuestions: l.total_questions || 0,
+            completedAt: l.completed_at || new Date().toISOString(),
+          }))
+        );
+      }
     } catch (error) {
       console.error('Failed to load cloud data:', error);
     }
@@ -437,6 +494,8 @@ export function AppProvider({
         setDailyPlan(null);
         setReadingCompletions([]);
         setSpeakingCompletions([]);
+        setDailyChallengeCompletion(null);
+        setListeningCompletions([]);
         return;
       }
 
@@ -480,6 +539,8 @@ export function AppProvider({
     setDailyPlan(null);
     setReadingCompletions([]);
     setSpeakingCompletions([]);
+    setDailyChallengeCompletion(null);
+    setListeningCompletions([]);
     setIsOnboarded(false);
   }, []);
 
@@ -507,6 +568,8 @@ export function AppProvider({
     setDailyPlan(createDailyPlan());
     setReadingCompletions([]);
     setSpeakingCompletions([]);
+    setDailyChallengeCompletion(null);
+    setListeningCompletions([]);
   }, []);
 
   const updateUser = useCallback(
@@ -1207,6 +1270,129 @@ export function AppProvider({
         ) as SpeakingWeakness[];
     }, [speakingCompletions]);
 
+  const completeDailyChallenge = useCallback(
+    (activitiesCompleted: number, xpAwarded: number): boolean => {
+      if (!user) return false;
+
+      const today = getTodayString();
+
+      if (
+        dailyChallengeCompletion &&
+        dailyChallengeCompletion.challengeDate === today &&
+        dailyChallengeCompletion.completed
+      ) {
+        return false;
+      }
+
+      const completion: DailyChallengeCompletion = {
+        userId: user.id,
+        challengeDate: today,
+        activitiesCompleted,
+        totalActivities: 3,
+        xpAwarded,
+        completed: activitiesCompleted >= 3,
+        completedAt: new Date().toISOString(),
+      };
+
+      setDailyChallengeCompletion(completion);
+
+      if (!user.isGuest) {
+        supabase
+          .from('daily_challenge_completions')
+          .upsert(
+            {
+              user_id: user.id,
+              challenge_date: today,
+              activities_completed: activitiesCompleted,
+              xp_awarded: xpAwarded,
+              completed_at: completion.completedAt,
+            },
+            { onConflict: 'user_id,challenge_date' }
+          )
+          .then(({ error }) => {
+            if (error) {
+              console.error(
+                'Failed to save daily challenge completion:',
+                error
+              );
+            }
+          });
+
+        if (xpAwarded > 0) {
+          addXP(xpAwarded);
+        }
+        updateStreakOnActivity();
+        checkAchievements();
+      }
+
+      return true;
+    },
+    [user, dailyChallengeCompletion, addXP, updateStreakOnActivity, checkAchievements]
+  );
+
+  const isDailyChallengeCompleted = useCallback(() => {
+    const today = getTodayString();
+    return (
+      dailyChallengeCompletion !== null &&
+      dailyChallengeCompletion.challengeDate === today &&
+      dailyChallengeCompletion.completed
+    );
+  }, [dailyChallengeCompletion]);
+
+  const completeListening = useCallback(
+    (completion: ListeningCompletion): boolean => {
+      if (!user) return false;
+
+      if (
+        listeningCompletions.some(
+          (item) => item.exerciseId === completion.exerciseId
+        )
+      ) {
+        return false;
+      }
+
+      setListeningCompletions((current) => [
+        ...current,
+        completion,
+      ]);
+
+      if (!user.isGuest) {
+        supabase
+          .from('listening_completions')
+          .insert({
+            user_id: user.id,
+            exercise_id: completion.exerciseId,
+            score: completion.score,
+            total_questions: completion.totalQuestions,
+            completed_at: completion.completedAt,
+          })
+          .then(({ error }) => {
+            if (error) {
+              console.error(
+                'Failed to save listening completion:',
+                error
+              );
+            }
+          });
+
+        addXP(AppConfig.xpPerListening);
+        updateStreakOnActivity();
+      }
+
+      return true;
+    },
+    [user, listeningCompletions, addXP, updateStreakOnActivity]
+  );
+
+  const isListeningCompleted = useCallback(
+    (exerciseId: string) => {
+      return listeningCompletions.some(
+        (item) => item.exerciseId === exerciseId
+      );
+    },
+    [listeningCompletions]
+  );
+
   return (
     <AppContext.Provider
       value={{
@@ -1244,6 +1430,12 @@ export function AppProvider({
         completeSpeaking,
         isSpeakingCompleted,
         getSpeakingWeaknesses,
+        dailyChallengeCompletion,
+        completeDailyChallenge,
+        isDailyChallengeCompleted,
+        listeningCompletions,
+        completeListening,
+        isListeningCompleted,
       }}
     >
       {children}
